@@ -4,6 +4,10 @@ A calm, hand-built nature game that runs in the browser. Shape a mountain brook 
 
 **Play:** https://markwalker24-games.github.io/pebble-pond/
 
+## Landscapes
+
+Meadow Brook, Mossy Falls, Steep Ravine, Forest Hollow, Granite Mountainside and Willow Lake.
+
 ## How to play
 
 - **Stones / Logs / Collect:** gather loose stones and fallen logs into your bag, then place them across the stream to build a dam.

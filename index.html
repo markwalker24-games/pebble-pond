@@ -264,6 +264,11 @@ function valley(i,d,cw,n,p){
 const FALL_I=120;
 const fallsBase=i=>i<FALL_I-1?12.5-i*0.03:i<FALL_I+1.5?lerp(12.5-(FALL_I-1)*0.03,3.2,smooth(FALL_I-1,FALL_I+1.5,i)):3.2-(i-FALL_I-1.5)*0.03;
 const fallsZ=i=>NZ*0.5+Math.sin(i*0.04+0.3)*18+Math.sin(i*0.12)*4;
+const MTN_LEDGES=[48,96,142,190,228];
+const MTN_STEP=(i,w)=>MTN_LEDGES.reduce((a,L)=>a+1.7*(1-smooth(L-w,L+w,i)),0);
+const MTN_BASE=i=>(NX-i)*0.05+MTN_STEP(i,1.2);
+const LAKE_B=i=>Math.exp(-(((i-152)/44)**4));
+const LAKE_BASE=(()=>{ const a=new Float32Array(NX+1); let h=0.4; for(let i=NX;i>=0;i--){ a[i]=h; h+=(0.034-0.03*LAKE_B(i)); } return i=>a[Math.max(0,Math.min(NX,Math.round(i)))]; })();
 const LEVELS=[
   {id:'meadow',name:'Meadow Brook',blurb:'A gentle stream winding through two wide, flowery meadows.',Q:3.6,
     base:i=>(NX-i)*0.035,
@@ -305,6 +310,29 @@ const LEVELS=[
     fixed(add,cwAt){ [122,226].forEach(i=>{ const c=cwAt(i); add(i-1,-(c+2.2),2.6,2.5); add(i+1,c+2,2.4,2.3); }); add(30,cwAt(30)+1.5,1.6,1.3); add(150,-(cwAt(150)+1.5),1.8,1.5); add(200,cwAt(200)+1.5,1.7,1.4); },
     decor:{stones:55,grass:1600,flowers:220,shrubs:400,pines:470,birch:200,treeRel:-0.4,treeChan:2.2},
     goals:[{type:'chop',n:10,label:'Fell 10 trees'},{type:'trout',n:6,label:'Home 6 trout'}]},
+  {id:'mountain',name:'Granite Mountainside',blurb:'A snowmelt creek cascades down the flank of a mountain, ledge by ledge, below a bare granite ridge.',Q:3.0,alpine:true,
+    base:MTN_BASE, zc:i=>NZ*0.56+Math.sin(i*0.038+0.8)*16+Math.sin(i*0.13+0.4)*4,
+    cw:i=>2.7+Math.sin(i*0.24)*0.3+1.6*MTN_LEDGES.reduce((a,L)=>a+gauss(i,L+4,3.5),0),
+    shape:(i,j,d,cw,n)=>{ const c=NZ*0.56+Math.sin(i*0.038+0.8)*16+Math.sin(i*0.13+0.4)*4, up=Math.max(0,c-j-cw-3), dn=Math.max(0,j-c-cw-3);
+      const v=valley(i,d,cw,n,{pool:i=>MTN_LEDGES.reduce((a,L)=>a+1.4*gauss(i,L+4,3.5),0),walls:0.55,rough:1.6,cap:3.4,floor:1.4,deep:1.1});
+      const ridge=up>0?up*0.13+Math.pow(up/48,2)*4.5+(n-0.5)*up*0.05+Math.max(0,Math.sin(i*0.05+n*3))*up*0.03:0;
+      const soft=smooth(cw+3,cw+16,d)*(MTN_STEP(i,14)-MTN_STEP(i,1.2));
+      return v+ridge+dn*0.05+soft; },
+    fixed(add,cwAt,zc){ MTN_LEDGES.forEach(L=>{ add(L-1.2,-(cwAt(L)+0.6),2.0,1.9); add(L-0.6,cwAt(L)+0.8,2.2,2.0); add(L+5,-(cwAt(L+5)+0.8),1.8,1.6); });
+      [[20,1],[40,-1],[95,1],[140,-1],[195,1],[240,-1]].forEach(([i,sd])=>add(i,sd*(cwAt(i)+1.4),rand(1.5,2.1),rand(1.3,1.8)));
+      for(let i=12;i<NX-10;i+=22) add(i+rand(-4,4),-(cwAt(i)+rand(12,26)),rand(2.4,3.6),rand(2,3)); },
+    decor:{stones:170,grass:2200,flowers:520,shrubs:380,pines:270,birch:26,decid:0.12,treeRel:0.6,treeChan:5,treeMax:11},
+    goals:[{type:'trout',n:5,label:'Home 5 trout'},{type:'deep',n:260,label:'Calm the cascades into pools'}]},
+  {id:'lake',name:'Willow Lake',blurb:'A slow brook feeds a quiet lake with a little island. Dam its narrow outlet to raise the water.',Q:3.4,
+    base:LAKE_BASE, zc:i=>NZ*0.5+Math.sin(i*0.028+0.6)*12+Math.sin(i*0.1)*3*(1-LAKE_B(i)),
+    cw:i=>3.2+Math.sin(i*0.22)*0.4+24*LAKE_B(i),
+    shape:(i,j,d,cw,n)=>{ let h=valley(i,d,cw,n,{pool:i=>1.5*LAKE_B(i),wides:[[50,18,9]],nars:[218],floor:2.6,walls:0.42,cap:4.6,rough:1.2,deep:1.25});
+      const c=NZ*0.5+Math.sin(i*0.028+0.6)*12, isl=Math.exp(-(((i-150)/7)**2+((j-c+7)/5.5)**2)); h+=isl*3.6+(isl>0.3?(n-0.5)*0.4:0);
+      return h; },
+    fixed(add,cwAt){ add(217,-(cwAt(217)+1.6),2.6,2.4); add(219,cwAt(219)+1.4,2.5,2.3); add(222,-(cwAt(222)+3.6),2,1.7);
+      [[30,1],[34,-1],[80,1],[236,-1],[246,1]].forEach(([i,sd])=>add(i,sd*(cwAt(i)+1.5),rand(1.4,1.9),rand(1.2,1.6))); add(149,-6,1.4,1.1); },
+    decor:{stones:120,grass:3000,flowers:900,shrubs:420,pines:120,birch:110,decid:0.5,treeRel:1.0,treeChan:4},
+    goals:[{type:'deep',n:900,label:'Raise the lake at its outlet'},{type:'minnow',n:20,label:'Draw in 20 minnows'},{type:'trout',n:8,label:'Home 8 trout'}]},
 ];
 let LV=LEVELS[0], levelIdx=0;
 const zc=i=>LV.zc(i), cwAt=i=>LV.cw(i);
@@ -413,7 +441,7 @@ const terrGeo=gridGeometry();
 const terrCol=new Float32Array(N*3); terrGeo.setAttribute('color',new THREE.BufferAttribute(terrCol,3));
 const terrain=new THREE.Mesh(terrGeo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.95,metalness:0}));
 terrain.receiveShadow=true; terrain.castShadow=true; scene.add(terrain);
-const COL={packed:hexf('#5f4733'),heap:hexf('#8a6a48'),under:hexf('#4f9a8c'),rock:hexf('#8f897c'),bed:hexf('#a39578'),bed2:hexf('#8a8069'),moss:hexf('#7d9150'),meadow:hexf('#9c9c62'),moss2:hexf('#66804a'),forest:hexf('#52693f'),earth:hexf('#8c6b48'),mud:hexf('#6e5038'),dug:hexf('#7b5b3d'),gravel:hexf('#aaa18b')};
+const COL={snowcap:hexf('#eef2f3'),packed:hexf('#5f4733'),heap:hexf('#8a6a48'),under:hexf('#4f9a8c'),rock:hexf('#8f897c'),bed:hexf('#a39578'),bed2:hexf('#8a8069'),moss:hexf('#7d9150'),meadow:hexf('#9c9c62'),moss2:hexf('#66804a'),forest:hexf('#52693f'),earth:hexf('#8c6b48'),mud:hexf('#6e5038'),dug:hexf('#7b5b3d'),gravel:hexf('#aaa18b')};
 function updateTerrainPositions(){
   const p=terrGeo.attributes.position.array;
   for(let k=0;k<N;k++) p[k*3+1]=T[k];
@@ -430,6 +458,7 @@ function updateTerrainColors(){
     else if(rel<0.55) c=mix3(COL.moss,COL.meadow,n2*0.8);
     else if(rel<3.6) c=mix3(COL.moss2,COL.moss,n2);
     else c=mix3(COL.forest,COL.moss2,n2*0.7);
+    if(LV.alpine&&rel>7.5){ c=mix3(c,mix3(COL.rock,mix3(COL.rock,COL.gravel,0.4),n),clamp((rel-7.5)/3,0,0.85)); if(rel>17) c=mix3(c,COL.snowcap,clamp((rel-17)/2.5,0,0.95)*(0.75+0.25*n)); }
     const il=i>0?k-1:k, ir=i<NX-1?k+1:k, jt=j>0?k-NX:k, jb=j<NZ-1?k+NX:k;
     const g=Math.hypot(T[ir]-T[il],T[jb]-T[jt])*0.5;
     if(g>0.55) c=mix3(c,COL.earth,clamp((g-0.55)*1.4,0,0.85));
@@ -828,14 +857,14 @@ function buildDecor(){
   // shrubs
   const shGeo=shrubGeo();
   decorKind='shrub';
-  instanced(shGeo,natureMat(new THREE.MeshStandardMaterial({roughness:0.9,flatShading:true,vertexColors:true}),0.04,0.6,0),sampleCells(LV.decor.shrubs,(i,j,k)=>chanD(i,j)>3&&relAt(i,k)>0.8).map(c=>{const s=rand(0.7,1.4);return {x:X0+c.i,y:c.y+0.35*s,z:Z0+c.j,ry:rand(0,6),sx:s*rand(1,1.4),sy:s*0.75,sz:s,c:pickCol(['#4b6e36','#58793c','#3e5f31','#647f44']),k:c.k,flood:0.6};}),true);
+  instanced(shGeo,natureMat(new THREE.MeshStandardMaterial({roughness:0.9,flatShading:true,vertexColors:true}),0.04,0.6,0),sampleCells(LV.decor.shrubs,(i,j,k)=>chanD(i,j)>3&&relAt(i,k)>0.8&&relAt(i,k)<(LV.decor.treeMax??99)).map(c=>{const s=rand(0.7,1.4);return {x:X0+c.i,y:c.y+0.35*s,z:Z0+c.j,ry:rand(0,6),sx:s*rand(1,1.4),sy:s*0.75,sz:s,c:pickCol(['#4b6e36','#58793c','#3e5f31','#647f44']),k:c.k,flood:0.6};}),true);
   // pebbles
   const pbGeo=rockGeo(0.25,1); pbGeo.scale(0.3,0.3,0.3);
   decorKind='pebble';
   instanced(pbGeo,natureMat(new THREE.MeshStandardMaterial({roughness:0.85,flatShading:true,vertexColors:true}),0,0,1),sampleCells(260,(i,j)=>{const d=chanD(i,j);return d>-1.5&&d<1.4;}).map(c=>{const s=rand(0.5,1.4);return {x:X0+c.i,y:c.y+0.03,z:Z0+c.j,ry:rand(0,6),rx:rand(0,1),sx:s,sy:s*0.6,sz:s*rand(0.8,1.2),c:pickCol(['#9b968b','#b3ada0','#857f74','#a39684']),k:c.k,flood:99};}),false);
   // trees (choppable)
   const D=LV.decor, occ=new Uint8Array(N);
-  const treeOk=(i,j,k)=>!occ[k]&&relAt(i,k)>D.treeRel&&chanD(i,j)>D.treeChan;
+  const treeOk=(i,j,k)=>!occ[k]&&relAt(i,k)>D.treeRel&&relAt(i,k)<(D.treeMax??99)&&chanD(i,j)>D.treeChan;
   const pickTrees=(n,type)=>{ const out=[]; for(let a=0;a<n*40&&out.length<n;a++){ const c=sampleCells(1,treeOk,1)[0]; if(c){ boxAround(c.i,c.j,2.2,(i,j,k)=>{ occ[k]=1; }); out.push({type,x:c.i,z:c.j,k:c.k,y:c.y,s:type==='pine'?rand(0.8,1.45):rand(0.85,1.25),alive:true,parts:[],geos:[]}); } } return out; };
   const pines=pickTrees(D.pines,'pine'), birches=pickTrees(D.birch,'birch');
   trees=pines.concat(birches); trees.forEach(t=>t.s*=1.3);
@@ -1493,6 +1522,8 @@ $('#btnReset').addEventListener('click',()=>{
   resetArm=0; loadLevel(levelIdx,null); setActiveSlot(null); toast('Fresh start'); markDirty(true);
 });
 const LEVEL_ART={
+  mountain:'<svg viewBox="0 0 160 90"><rect width="160" height="90" fill="#7f9a5c"/><path d="M0 0h160v38C130 30 110 14 80 10S30 22 0 30z" fill="#8f897c"/><path d="M58 13l12-9 10 7 8-4 10 8c-12 2-28 2-40-2z" fill="#eef2f3"/><path d="M-5 60C20 56 30 50 45 52l4-6 4 6c20 2 30-6 48-4l4-6 4 6c18 2 30 8 56 6" stroke="#5fb3b4" stroke-width="5" fill="none"/><g fill="#2f5233"><path d="M14 80l6-14 6 14z"/><path d="M30 86l6-14 6 14z"/><path d="M118 82l6-14 6 14z"/><path d="M136 46l5-12 5 12z"/><path d="M24 42l5-12 5 12z"/></g></svg>',
+  lake:'<svg viewBox="0 0 160 90"><rect width="160" height="90" fill="#9fb06a"/><path d="M-5 46C20 44 34 48 52 46" stroke="#5fb3b4" stroke-width="6" fill="none"/><ellipse cx="96" cy="46" rx="44" ry="26" fill="#3f93a6"/><ellipse cx="96" cy="46" rx="38" ry="21" fill="#2f7f93"/><ellipse cx="92" cy="38" rx="8" ry="5" fill="#86a352"/><path d="M138 47c8 0 14-1 27 1" stroke="#5fb3b4" stroke-width="5" fill="none"/><g fill="#86a352"><circle cx="20" cy="22" r="7"/><circle cx="34" cy="74" r="7"/><circle cx="146" cy="18" r="6"/></g><g fill="#3e6840"><path d="M118 82l6-14 6 14z"/><path d="M60 16l5-12 5 12z"/></g><g fill="#5a8a3c"><circle cx="78" cy="55" r="2.5"/><circle cx="110" cy="56" r="2.5"/><circle cx="104" cy="34" r="2"/></g></svg>',
   meadow:'<svg viewBox="0 0 160 90"><rect width="160" height="90" fill="#9fb06a"/><ellipse cx="78" cy="50" rx="52" ry="22" fill="#b9b873"/><path d="M-5 30C30 30 40 62 80 56S130 30 165 40" stroke="#5fb3b4" stroke-width="9" fill="none" stroke-linecap="round"/><g fill="#3e6840"><path d="M18 74l6-14 6 14z"/><path d="M130 76l6-14 6 14z"/><path d="M142 20l5-12 5 12z"/></g><g fill="#f2d35c"><circle cx="60" cy="44" r="2"/><circle cx="96" cy="66" r="2"/></g><g fill="#f4f0e4"><circle cx="70" cy="68" r="2"/><circle cx="108" cy="42" r="2"/></g></svg>',
   falls:'<svg viewBox="0 0 160 90"><rect width="160" height="90" fill="#8fa766"/><rect x="0" y="0" width="70" height="90" fill="#a2b373"/><rect x="66" y="0" width="10" height="90" fill="#8f897c"/><path d="M-5 42C20 38 40 48 70 44" stroke="#5fb3b4" stroke-width="8" fill="none"/><rect x="68" y="38" width="9" height="12" fill="#e8f3f1"/><ellipse cx="90" cy="46" rx="14" ry="11" fill="#2f7f93"/><path d="M100 48C120 54 140 44 165 50" stroke="#5fb3b4" stroke-width="8" fill="none"/><g fill="#3e6840"><path d="M20 76l6-14 6 14z"/><path d="M120 78l6-14 6 14z"/><path d="M134 22l5-12 5 12z"/></g></svg>',
   ravine:'<svg viewBox="0 0 160 90"><rect width="160" height="90" fill="#7f9a5c"/><path d="M0 0h160v90H0z" fill="url(#rv)"/><defs><linearGradient id="rv" x1="0" x2="1"><stop offset="0" stop-color="#9eb070"/><stop offset="1" stop-color="#6a8550"/></linearGradient></defs><path d="M-5 20C25 70 45 70 70 30S120 10 165 70" stroke="#8c6b48" stroke-width="16" fill="none"/><path d="M-5 20C25 70 45 70 70 30S120 10 165 70" stroke="#5fb3b4" stroke-width="5" fill="none"/><g fill="#2f5233"><path d="M12 80l6-14 6 14z"/><path d="M28 84l6-14 6 14z"/><path d="M118 30l6-14 6 14z"/><path d="M134 24l6-14 6 14z"/><path d="M84 82l6-14 6 14z"/></g></svg>',
