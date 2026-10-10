@@ -160,9 +160,7 @@ body{height:100%;margin:0;background:#dde3da;color:var(--ink);font-family:var(--
       </div>
       <div class="details" id="cardDetails">
       <span class="slotname" id="slotName" hidden></span>
-      <span class="counts"><span><i style="background:#8a7d4a"></i>Brook trout <b id="nTrout">0</b></span><span><i style="background:#7f8a8c"></i>Minnows <b id="nMinnow">0</b></span></span>
       <span class="visitors" id="visitors" hidden></span>
-      <span class="goals" id="goals"></span>
       <span class="savestat" id="saveStat"></span>
       </div>
     </div>
@@ -1230,7 +1228,6 @@ function manageFish(dt){
   }
   if(!keepFish){ if(lt.length>wantT) lt[0].leaving=true; if(lm.length>wantM) lm[0].leaving=true; }
   liveT=live('trout').length; liveM=live('minnow').length;
-  $('#nTrout').textContent=liveT; $('#nMinnow').textContent=liveM;
   updateGoals();
 }
 let liveT=0, liveM=0;
@@ -1533,7 +1530,7 @@ const DONE_KEY='troutbrook.done';
 let doneSet=new Set(); try{ doneSet=new Set(JSON.parse(localStorage.getItem(DONE_KEY)||'[]')); }catch(_){}
 let goalsHTML='', levelDone=false;
 function goalValue(g){ return g.type==='trout'?liveT:g.type==='minnow'?liveM:g.type==='deep'?habitat.trout.length:g.type==='chop'?chopped:0; }
-function updateGoals(){
+function updateGoals(){ return;
   let all=true;
   const html=LV.goals.map(g=>{ const v=goalValue(g), ok=v>=g.n; if(ok) g.met=true; const met=g.met; if(!met) all=false;
     const prog=g.type==='deep'?Math.min(100,Math.round(v/g.n*100))+'%':Math.min(v,g.n)+'/'+g.n;
@@ -1542,7 +1539,7 @@ function updateGoals(){
   if(all&&!levelDone){ levelDone=true; snd.chime(); toast(LV.name+' complete'); doneSet.add(LV.id); try{ localStorage.setItem(DONE_KEY,JSON.stringify([...doneSet])); }catch(_){} markDirty(); }
 }
 function buildLevelList(){
-  $('#levels').innerHTML=LEVELS.map((l,n)=>`<button class="lv" data-n="${n}" aria-current="${n===levelIdx}">${LEVEL_ART[l.id]}<span class="body"><h3>${l.name}</h3><p>${l.blurb}</p><span class="tags">${doneSet.has(l.id)?'<span class="tag ok">Complete</span>':''}${savedIds.has(l.id)&&n!==levelIdx?'<span class="tag">Saved pond</span>':''}${l.logsLimited?'<span class="tag">Few stones</span>':''}${n===levelIdx?'<span class="tag">Here now</span>':''}</span></span></button>`).join('');
+  $('#levels').innerHTML=LEVELS.map((l,n)=>`<button class="lv" data-n="${n}" aria-current="${n===levelIdx}">${LEVEL_ART[l.id]}<span class="body"><h3>${l.name}</h3><p>${l.blurb}</p><span class="tags">${savedIds.has(l.id)&&n!==levelIdx?'<span class="tag">Saved pond</span>':''}${l.logsLimited?'<span class="tag">Few stones</span>':''}${n===levelIdx?'<span class="tag">Here now</span>':''}</span></span></button>`).join('');
   document.querySelectorAll('.lv').forEach(b=>b.addEventListener('click',()=>{ const n=+b.dataset.n; closeSheet(); if(n!==levelIdx) switchLevel(n); }));
 }
 function openSheet(){ buildLevelList(); $('#sheet').hidden=false; dismissHint(); }
