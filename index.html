@@ -185,7 +185,7 @@ body{height:100%;margin:0;background:#dde3da;color:var(--ink);font-family:var(--
     <button class="tool" data-tool="chop" aria-pressed="false"><svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 24.5L18.5 9"/><path d="M15 6.2c2.8-2.9 6.8-3.2 9-1.2-1.1 1.7-1.5 3.7-1.1 6.1-2.5.4-5-.6-6.9-2.5z"/></svg>Chop</button>
     <button class="tool" data-tool="dig" aria-pressed="false"><svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 4l5 5M21.5 6.5L13 15"/><path d="M13.5 11.5l3 3-3.6 5.6c-1.3 2-4.2 2.3-5.9.6l-.1-.1c-1.7-1.7-1.4-4.6.6-5.9z"/><path d="M4 24.5c2-1 4-1 6 0"/></svg><span id="digLabel">Dig</span></button>
     <button class="tool" data-tool="trench" aria-pressed="false"><svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21c4 0 5-6 9-6s5 5 9 5" stroke-dasharray="0.1 3.4" stroke-width="2.6"/><path d="M3 12c4 0 5-6 9-6s5 5 9 5"/><path d="M3 16c4 0 5-6 9-6s5 5 9 5" opacity=".45"/></svg>Trench</button>
-    <button class="tool" data-tool="remove" aria-pressed="false"><svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14V6.5a1.6 1.6 0 0 1 3.2 0V13"/><path d="M12.2 12.5V5a1.6 1.6 0 0 1 3.2 0v8"/><path d="M15.4 12.8V6.6a1.6 1.6 0 0 1 3.2 0v8.6"/><path d="M18.6 11.5a1.6 1.6 0 0 1 3.2 0v4.7c0 4.6-3.2 8.3-7.6 8.3-2.7 0-4.4-1.3-6-3.6L5 17.3a1.6 1.6 0 0 1 2.5-2L9 17"/></svg>Lift</button>
+    <button class="tool" data-tool="remove" aria-pressed="false"><svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14V6.5a1.6 1.6 0 0 1 3.2 0V13"/><path d="M12.2 12.5V5a1.6 1.6 0 0 1 3.2 0v8"/><path d="M15.4 12.8V6.6a1.6 1.6 0 0 1 3.2 0v8.6"/><path d="M18.6 11.5a1.6 1.6 0 0 1 3.2 0v4.7c0 4.6-3.2 8.3-7.6 8.3-2.7 0-4.4-1.3-6-3.6L5 17.3a1.6 1.6 0 0 1 2.5-2L9 17"/></svg>Collect</button>
     <button class="tool" id="btnBuild" aria-pressed="false" aria-haspopup="menu" aria-controls="buildMenu"><svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13.5L14 5l10 8.5"/><path d="M6.5 11.5V23h15V11.5"/><path d="M11.5 23v-6h5v6"/><path d="M19 7.2V4.5h2.5v4.8"/></svg>Build</button>
   </div>
 
@@ -1541,8 +1541,8 @@ let toastTimer=0;
 function toast(msg){ dismissHint(); const t=$('#toast'); t.textContent=msg; t.classList.add('show'); toastTimer=3.2; }
 const hint=$('#hint');
 hint.textContent=(isTouch
-  ? 'Lift loose stones and fallen logs into your bag, then place them across a narrow spot to pool the water. Dig scoops earth; tap again to drop it. Trench: draw a line from the water. Tap a tool again to put it down and drag to look around. Build a cabin for a settler. Two fingers pinch and twist. Three fingers tilt.'
-  : 'Lift loose stones and fallen logs into your bag, then place them across a narrow spot to pool the water. Dig scoops earth; click again to drop it. Trench: draw a line from the water. Click a tool again to put it down and drag to look around. Build a cabin for a settler. Option-drag or right-drag to turn and tilt, Q and E to spin, pinch or scroll to zoom.');
+  ? 'Collect loose stones and fallen logs into your bag, then place them across a narrow spot to pool the water. Dig scoops earth; tap again to drop it. Trench: draw a line from the water. Tap a tool again to put it down and drag to look around. Build a cabin for a settler. Two fingers pinch and twist. Three fingers tilt.'
+  : 'Collect loose stones and fallen logs into your bag, then place them across a narrow spot to pool the water. Dig scoops earth; click again to drop it. Trench: draw a line from the water. Click a tool again to put it down and drag to look around. Build a cabin for a settler. Option-drag or right-drag to turn and tilt, Q and E to spin, pinch or scroll to zoom.');
 let hintT=18;
 function dismissHint(){ if(hintT>0){ hintT=0; hint.classList.add('gone'); } }
 setTimeBtn(); setSoundBtn(); setSeasonBtn(); setRainBtn(); $('#btnView').innerHTML=EYE_OFF;
@@ -1638,7 +1638,7 @@ function endStroke(){
   if(!stroke) return;
   if(stroke.tool==='log'){
     preview.visible=false;
-    if(!bag.logs.length){ toast('Chop a tree or lift a fallen log first'); stroke=null; return; }
+    if(!bag.logs.length){ toast('Chop a tree or collect a fallen log first'); stroke=null; return; }
     let a=stroke.start, b=stroke.cur, dl=Math.hypot(b.x-a.x,b.z-a.z), ux, uz;
     if(dl<1.2){ const ang=rand(0,Math.PI); ux=Math.cos(ang); uz=Math.sin(ang); } else { ux=(b.x-a.x)/dl; uz=(b.z-a.z)/dl; }
     const len=bag.logs.pop(), lsp=bag.logSp.pop(); updateBag();
@@ -1652,7 +1652,7 @@ function endStroke(){
   stroke=null; if(isTouch) cursor.visible=false;
 }
 function dropStone(h){
-  if(!bag.stones.length){ if(stroke&&!stroke.warned){ stroke.warned=true; toast('Lift loose stones to fill your bag'); } return; }
+  if(!bag.stones.length){ if(stroke&&!stroke.warned){ stroke.warned=true; toast('Collect loose stones to fill your bag'); } return; }
   const st=bag.stones.pop(); updateBag(); markDirty();
   const k=cellOf(h.x,h.z), wet=W[k]>0.1, top=T[k]+B[k]+W[k];
   const so=addStone(h.x+rand(-0.25,0.25),h.z+rand(-0.25,0.25),{r:st.r,h:st.h}); so.placed=true; dropJuice(so,wet);

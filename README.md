@@ -6,7 +6,7 @@ A calm, hand-built nature game that runs in the browser. Shape a mountain brook 
 
 ## How to play
 
-- **Stones / Logs / Lift:** gather loose stones and fallen logs into your bag, then place them across the stream to build a dam.
+- **Stones / Logs / Collect:** gather loose stones and fallen logs into your bag, then place them across the stream to build a dam.
 - **Dig:** scoop earth and drop it elsewhere. Mud packed onto a dam seals it.
 - **Trench:** draw a line from the water and a channel is dug for it to follow.
 - **Chop:** fell trees for logs.
